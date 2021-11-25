@@ -1,0 +1,14 @@
+.main {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content:center;
+}
+
+.login-form {
+  max-width: 300px;
+}
+
+.login-form-button {
+  width: 100%;
+}

@@ -1,0 +1,9 @@
+.button{
+    float: left;
+    margin: 20px 0;
+}
+
+.avatar-uploader > .ant-upload {
+    width: 128px;
+    height: 128px;
+  }
