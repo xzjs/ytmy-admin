@@ -10,13 +10,24 @@ import {
   InputNumber,
   Alert,
 } from "antd";
-import { Get } from "react-axios";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./good.css";
-import { LoadingOutlined, PlusOutlined } from "@ant-design/icons";
-import axios from "axios";
+import {
+  LoadingOutlined,
+  PlusOutlined,
+  ExclamationCircleOutlined,
+} from "@ant-design/icons";
+import {request} from "../utils/request";
 
 function Good() {
+  const [goods, setGoods] = useState([]);
+
+  useEffect(() => {
+    request.get("/goods").then((res) => {
+      setGoods(res.data);
+    });
+  });
+
   const [visible, setVisible] = useState(false);
   const [good, setGood] = useState({
     ID: 0,
@@ -54,20 +65,33 @@ function Good() {
       dataIndex: "ID",
       render: (ID) => (
         <Space size="middle">
-          <a>修改</a>
-          <a>删除</a>
+          <a
+            onClick={() => {
+              onEdit(ID);
+            }}
+          >
+            修改
+          </a>
+          <a
+            onClick={() => {
+              onDelete(ID);
+            }}
+          >
+            删除
+          </a>
         </Space>
       ),
     },
   ];
-  const [error, setError] = useState("");
+  const [error, setError] = useState({ tableError: "", formError: "" });
+  const [updateCount, setUpdateCount] = useState(0);
   const normFile = (info) => {
     if (info.file.status == "done") {
       return info.file.response.key;
     }
   };
   const getToken = () => {
-    return axios.get("/api/uptoken").then((res) => {
+    return request.get("/api/uptoken").then((res) => {
       return res.data;
     });
   };
@@ -77,16 +101,41 @@ function Good() {
     }
   };
   const onFinish = (values) => {
-    axios
+    request
       .post("/api/goods", values)
       .then((res) => {
         form.resetFields();
         setVisible(false);
+        setUpdateCount(updateCount + 1);
       })
       .catch((err) => {
-        setError(err.response.data);
+        setError({ formError: err.response.data });
       });
   };
+  const { confirm } = Modal;
+
+  const onDelete = (id) => {
+    confirm({
+      title: "是否删除商品",
+      icon: <ExclamationCircleOutlined />,
+      okText: "是",
+      okType: "danger",
+      cancelText: "点错了",
+      onOk() {
+        request
+          .delete("/api/goods/" + id)
+          .then((res) => {
+            setUpdateCount(updateCount + 1);
+          })
+          .catch((err) => {
+            setError({ tableError: err.response.data });
+          });
+      },
+      onCancel() {},
+    });
+  };
+
+  const onEdit = (id) => {};
 
   return (
     <div>
@@ -100,16 +149,18 @@ function Good() {
       >
         添加商品
       </Button>
-      <Get url="/goods">
-        {(error, response, isLoading, onReload) => {
-          if (response !== null) {
-            return <Table columns={columns} dataSource={response.data} />;
-          }
-          return <div>Default message before request is made.</div>;
-        }}
-      </Get>
+      {error.tableError ? (
+        <Alert message={error.tableError} type="error" showIcon closable />
+      ) : (
+        ""
+      )}
+      <Table columns={columns} dataSource={goods} />
       <Modal visible={visible} footer={null} closable={false}>
-        {error ? <Alert message="Error" type="error" showIcon /> : ""}
+        {error.formError ? (
+          <Alert message="Error" type="error" showIcon closable />
+        ) : (
+          ""
+        )}
         <Form onFinish={onFinish}>
           <Form.Item name="ID"></Form.Item>
           <Form.Item
@@ -153,17 +204,19 @@ function Good() {
             <Input rows={2} />
           </Form.Item>
           <Form.Item>
-            <Button type="primary" htmlType="submit">
-              提交
-            </Button>
-            <Button
-              onClick={() => {
-                form.resetFields();
-                setVisible(false);
-              }}
-            >
-              取消
-            </Button>
+            <Space size="middle">
+              <Button type="primary" htmlType="submit">
+                提交
+              </Button>
+              <Button
+                onClick={() => {
+                  form.resetFields();
+                  setVisible(false);
+                }}
+              >
+                取消
+              </Button>
+            </Space>
           </Form.Item>
         </Form>
       </Modal>

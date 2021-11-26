@@ -17,30 +17,13 @@ import axios from "axios";
 
 function App() {
   const [isLogin, setIsLogin] = useState(true);
-  let content;
-  if (isLogin) {
-    content = <DashBoard></DashBoard>;
-  } else {
-    content = <Login onSetIsLogin={setIsLogin}></Login>;
-  }
-  const axiosInstance = axios.create({
-    baseURL: "api/",
-  });
-  axiosInstance.interceptors.response.use(
-    (response) => {
-      return response;
-    },
-    (error) => {
-      console.log(error)
-      if (error.response.status == 401) {
-        setIsLogin(false);
-      }
-      return Promise.reject(error);
-    }
-  );
   return (
     <div className="App">
-      <AxiosProvider instance={axiosInstance}>{content}</AxiosProvider>
+      {isLogin ? (
+        <DashBoard></DashBoard>
+      ) : (
+        <Login onSetIsLogin={setIsLogin}></Login>
+      )}
     </div>
   );
 }
