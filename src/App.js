@@ -2,28 +2,17 @@ import { useState } from "react";
 import "./App.css";
 import DashBoard from "./pages/dashboard";
 import Login from "./pages/login";
-import {
-  AxiosProvider,
-  Request,
-  Get,
-  Delete,
-  Head,
-  Post,
-  Put,
-  Patch,
-  withAxios,
-} from "react-axios";
-import axios from "axios";
+import { store } from "./store/store";
 
 function App() {
   const [isLogin, setIsLogin] = useState(true);
+  const handleChange = () => {
+    setIsLogin(store.getState().isLogin);
+  };
+  store.subscribe(handleChange);
   return (
     <div className="App">
-      {isLogin ? (
-        <DashBoard></DashBoard>
-      ) : (
-        <Login onSetIsLogin={setIsLogin}></Login>
-      )}
+      {isLogin ? <DashBoard></DashBoard> : <Login></Login>}
     </div>
   );
 }

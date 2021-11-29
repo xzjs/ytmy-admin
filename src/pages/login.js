@@ -3,14 +3,16 @@ import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import "./login.css";
 import axios from "axios";
 import { useState } from "react";
+import { store } from "../store/store";
+import { setLogin } from "../store/action";
 
-function Login(props) {
+function Login() {
   const [msg, setMsg] = useState("");
   const onFinish = (values) => {
     axios
       .post("/api/admin/login", values)
       .then((res) => {
-        props.onSetIsLogin(true);
+        store.dispatch(setLogin(true));
       })
       .catch((err) => {
         setMsg(err.response.data);

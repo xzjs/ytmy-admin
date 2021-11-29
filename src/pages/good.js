@@ -17,18 +17,13 @@ import {
   PlusOutlined,
   ExclamationCircleOutlined,
 } from "@ant-design/icons";
-import {request} from "../utils/request";
+import { request } from "../utils/request";
+import { isTSEnumMember } from "@babel/types";
+import { baseURL } from "../utils/img";
 
 function Good() {
   const [goods, setGoods] = useState([]);
-
-  useEffect(() => {
-    request.get("/goods").then((res) => {
-      setGoods(res.data);
-    });
-  });
-
-  const [visible, setVisible] = useState(false);
+  const [updateCount, setUpdateCount] = useState([]);
   const [good, setGood] = useState({
     ID: 0,
     name: "",
@@ -36,6 +31,14 @@ function Good() {
     price: 0,
     description: "",
   });
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    request.get("/goods").then((res) => {
+      setGoods(res.data);
+    });
+  }, [updateCount]);
+
   const [form] = Form.useForm();
   const columns = [
     {
@@ -47,7 +50,7 @@ function Good() {
       title: "图片",
       dataIndex: "img",
       key: "img",
-      render: (img) => <Image width={200} src={img} />,
+      render: (img) => <Image width={200} src={baseURL + img} />,
     },
     {
       title: "价格",
@@ -63,11 +66,11 @@ function Good() {
       title: "操作",
       key: "action",
       dataIndex: "ID",
-      render: (ID) => (
+      render: (ID, item) => (
         <Space size="middle">
           <a
             onClick={() => {
-              onEdit(ID);
+              onEdit(item);
             }}
           >
             修改
@@ -84,14 +87,13 @@ function Good() {
     },
   ];
   const [error, setError] = useState({ tableError: "", formError: "" });
-  const [updateCount, setUpdateCount] = useState(0);
   const normFile = (info) => {
     if (info.file.status == "done") {
       return info.file.response.key;
     }
   };
   const getToken = () => {
-    return request.get("/api/uptoken").then((res) => {
+    return request.get("/uptoken").then((res) => {
       return res.data;
     });
   };
@@ -101,8 +103,13 @@ function Good() {
     }
   };
   const onFinish = (values) => {
-    request
-      .post("/api/goods", values)
+    let promise;
+    if (values.ID > 0) {
+      promise = request.put("/goods/" + values.ID, values);
+    } else {
+      promise = request.post("/goods", values);
+    }
+    promise
       .then((res) => {
         form.resetFields();
         setVisible(false);
@@ -123,7 +130,7 @@ function Good() {
       cancelText: "点错了",
       onOk() {
         request
-          .delete("/api/goods/" + id)
+          .delete("/goods/" + id)
           .then((res) => {
             setUpdateCount(updateCount + 1);
           })
@@ -135,7 +142,18 @@ function Good() {
     });
   };
 
-  const onEdit = (id) => {};
+  const onEdit = (item) => {
+    let imgArr = item.img.split("/");
+    let img = imgArr[imgArr.length - 1];
+    form.setFieldsValue({
+      ID: item.ID,
+      name: item.name,
+      img: img,
+      price: item.price,
+      description: item.description,
+    });
+    setVisible(true);
+  };
 
   return (
     <div>
@@ -161,7 +179,7 @@ function Good() {
         ) : (
           ""
         )}
-        <Form onFinish={onFinish}>
+        <Form onFinish={onFinish} form={form}>
           <Form.Item name="ID"></Form.Item>
           <Form.Item
             label="商品名"
@@ -181,12 +199,17 @@ function Good() {
               listType="picture-card"
               className="avatar-uploader"
               action="https://upload.qiniup.com"
+              showUploadList={false}
               data={getToken}
               onChange={handleChange}
             >
-              <div>
-                <div style={{ marginTop: 8 }}>Upload</div>
-              </div>
+              {form.getFieldValue("img") ? (
+                <img className="img"  src={baseURL + form.getFieldValue("img")} alt="" />
+              ) : (
+                <div>
+                  <div style={{ marginTop: 8 }}>Upload</div>
+                </div>
+              )}
             </Upload>
           </Form.Item>
           <Form.Item
