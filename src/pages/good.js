@@ -13,12 +13,9 @@ import {
 import React, { useEffect, useState } from "react";
 import "./good.css";
 import {
-  LoadingOutlined,
-  PlusOutlined,
   ExclamationCircleOutlined,
 } from "@ant-design/icons";
 import { request } from "../utils/request";
-import { isTSEnumMember } from "@babel/types";
 import { baseURL } from "../utils/img";
 
 function Good() {
